@@ -1,12 +1,12 @@
 # include <stdio.h>
+# include <stdlib.h>
 
 # define N 100 // Tamanho da grade
-# define T 1000000 // Número de iterações
 # define D 0.1 // Coeficiente de difusão
 # define DELTA_T 0.01
 # define DELTA_X 1.0
 
-void diff_eq(double C[N][N], double C_new[N][N]) {
+void diff_eq(double C[N][N], double C_new[N][N], int T) {
     for (int t = 0; t < T; t++) {
         for (int i = 1; i < N - 1; i++) {
             for (int j = 1; j < N - 1; j++) {
@@ -22,16 +22,21 @@ void diff_eq(double C[N][N], double C_new[N][N]) {
     }
 }
 
-int main() {
-    FILE * saida = fopen("matriz_sequencial.csv", "w+");
+int main(int argc, char ** argv) {
+    int T = atoi(argv[1]);
+
+    char arquivo[100];
+    sprintf(arquivo, "saida_sequencial/%d.csv", T);
+    FILE * saida = fopen(arquivo, "w+");
+
     double C[N][N] = {0}; // Concentração inicial
     double C_new[N][N] = {0}; // Concentração para a próxima iteração
-    // Inicializar uma concentração alta no centro
-    C[N/2][N/2] = 1.0;
-    // Executar a equação de difusão
-    diff_eq(C, C_new);
-    // Exibir resultado para verificação
-    printf("Concentração final no centro: %f\n", C[N/2][N/2]);
+
+    C[N/2][N/2] = 1.0; // Inicializar uma concentração alta no centro
+    diff_eq(C, C_new, T);// Executar a equação de difusão
+
+    printf("Concentração final no centro: %f\n", C[N/2][N/2]); // Exibir resultado para verificação
+
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             if(j == N-1){
