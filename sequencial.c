@@ -1,22 +1,17 @@
 # include <stdio.h>
 # include <stdlib.h>
+#include <omp.h>
 
-# define N 100 // Tamanho da grade
+# define N 10 // Tamanho da grade
 # define D 0.1 // Coeficiente de difusão
 # define DELTA_T 0.01
 # define DELTA_X 1.0
 
-void diff_eq(double C[N][N], double C_new[N][N], int T) {
+void diff_eq(double ***C, int T) {
     for (int t = 0; t < T; t++) {
         for (int i = 1; i < N - 1; i++) {
             for (int j = 1; j < N - 1; j++) {
-                C_new[i][j] = C[i][j] + D * DELTA_T * ((C[i+1][j] + C[i-1][j] + C[i][j+1] + C[i][j-1] - 4 * C[i][j]) / (DELTA_X));
-            }
-        }
-        // Atualizar matriz para a próxima iteração
-        for (int i = 1; i < N - 1; i++) {
-            for (int j = 1; j < N - 1; j++) {
-                C[i][j] = C_new[i][j];
+                C[(t+1)%2][i][j] = C[t%2][i][j] + D * DELTA_T * ((C[t%2][i+1][j] + C[t%2][i-1][j] + C[t%2][i][j+1] + C[t%2][i][j-1] - 4 * C[t%2][i][j]) / (DELTA_X));
             }
         }
     }
@@ -29,22 +24,47 @@ int main(int argc, char ** argv) {
     sprintf(arquivo, "saida_sequencial/%d.csv", T);
     FILE * saida = fopen(arquivo, "w+");
 
-    double C[N][N] = {0}; // Concentração inicial
-    double C_new[N][N] = {0}; // Concentração para a próxima iteração
+    double ***C = (double ***)malloc(2 * sizeof(double **));
+    for(int t = 0; t<2; t++){
+        C[t] = (double **)malloc(N * sizeof(double *));
+        for (int i = 0; i < N; i++) {
+            C[t][i] = (double *)malloc(N * sizeof(double));
+        }
+    }
+    // double C[2][N][N] = {0}; // Concentração inicial
 
-    C[N/2][N/2] = 1.0; // Inicializar uma concentração alta no centro
-    diff_eq(C, C_new, T);// Executar a equação de difusão
+    for (int t = 0; t < 2; t++)
+        for (int i = 0; i < N; i++)
+            for (int j = 0; j < N; j++)
+                C[t][i][j] = 0.0;
 
-    printf("Concentração final no centro: %f\n", C[N/2][N/2]); // Exibir resultado para verificação
+    C[0][N/2][N/2] = 1.0; // Inicializar uma concentração alta no centro
+    double start = omp_get_wtime();
+    diff_eq(C, T);// Executar a equação de difusão
+    double end = omp_get_wtime();
+
+    //printf("Concentração final no centro: %f\n", C[T%2][N/2][N/2]); // Exibir resultado para verificação
 
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             if(j == N-1){
-                fprintf(saida, "%f\n", C[i][j]);
+                fprintf(saida, "%f\n", C[T%2][i][j]);
             }
             else{
-                fprintf(saida, "%f,", C[i][j]);
+                fprintf(saida, "%f,", C[T%2][i][j]);
             }
         }
     }
+
+    printf("%f\n", end - start);
+
+    for (int t = 0; t < 2; t++) {
+        for (int i = 0; i < N; i++) {
+            free(C[t][i]);
+        }
+        free(C[t]);
+    }
+    free(C);
+
+    return 0;
 }

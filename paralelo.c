@@ -2,12 +2,12 @@
 #include <omp.h>
 # include <stdlib.h>
 
-# define N 100 // Tamanho da grade
+# define N 10 // Tamanho da grade
 # define D 0.1 // Coeficiente de difusão
 # define DELTA_T 0.01
 # define DELTA_X 1.0
 
-void diff_eq(double C[2][N][N], int T) {
+void diff_eq(double ***C, int T) {
     for (int t = 0; t < T; t++) {
         int i, j;
         #pragma omp parallel default(none) private(i,j) shared(C,t)
@@ -25,19 +25,33 @@ void diff_eq(double C[2][N][N], int T) {
 
 int main(int argc, char ** argv) {
     int T = atoi(argv[1]);
+    int quant_threads= atoi(argv[2]);
     char arquivo[100];
     sprintf(arquivo, "saida_paralelo/%d.csv", T);
     FILE * saida = fopen(arquivo, "w+");
 
-    double C[2][N][N] = {0}; 
+    double ***C = (double ***)malloc(2 * sizeof(double **));
+    for(int t = 0; t<2; t++){
+        C[t] = (double **)malloc(N * sizeof(double *));
+        for (int i = 0; i < N; i++) {
+            C[t][i] = (double *)malloc(N * sizeof(double));
+        }
+    }
+    // double C[2][N][N] = {0}; 
+    // C[0][N/2][N/2] = 1.0; // Inicializar uma concentração alta no centro
 
-    C[0][N/2][N/2] = 1.0; // Inicializar uma concentração alta no centro
+    for (int t = 0; t < 2; t++)
+        for (int i = 0; i < N; i++)
+            for (int j = 0; j < N; j++)
+                C[t][i][j] = 0.0;
 
-    omp_set_num_threads(4);
-
+    
+    omp_set_num_threads(quant_threads);
+    double start = omp_get_wtime();
     diff_eq(C, T); // Executar a equação de difusão
+    double end = omp_get_wtime();
 
-    printf("Concentração final no centro: %f\n", C[T%2][N/2][N/2]); // Exibir resultado para verificação
+    //printf("Concentração final no centro: %f\n", C[T%2][N/2][N/2]); // Exibir resultado para verificação
 
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
@@ -49,4 +63,16 @@ int main(int argc, char ** argv) {
             }
         }
     }
+
+    printf("%f\n", end - start);
+
+    for (int t = 0; t < 2; t++) {
+        for (int i = 0; i < N; i++) {
+            free(C[t][i]);
+        }
+        free(C[t]);
+    }
+    free(C);
+
+    return 0;
 }
