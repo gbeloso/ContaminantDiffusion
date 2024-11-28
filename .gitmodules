@@ -1,0 +1,3 @@
+[submodule "ContaminantDiffusion"]
+	path = ContaminantDiffusion
+	url = https://github.com/gbeloso/ContaminantDiffusion
