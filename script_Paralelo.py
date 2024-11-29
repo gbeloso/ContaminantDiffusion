@@ -48,7 +48,7 @@ else:
 # Gerando gráficos para cada configuração de threads
 for threads in quant_threads:
     resultados = []
-    saida_diretorio = f"saida_pararelo{threads}"
+    saida_diretorio = f"saida_paralelo{threads}"
     os.makedirs(saida_diretorio, exist_ok=True)
     for T in valores_T:
         print(f"Executando o programa com T={T} e Threads={threads}...")
@@ -83,7 +83,7 @@ for threads in quant_threads:
         plt.savefig(f"analise_tempo_paralelo{threads}.png")
         # plt.show()
 
-        salvar_resultados_em_arquivo(valores_T[:len(resultados)], resultados, t_medio, f"tempos_execucao_pararelo{threads}.txt")
+        salvar_resultados_em_arquivo(valores_T[:len(resultados)], resultados, t_medio, f"tempos_execucao_paralelo{threads}.txt")
     else:
         print(f"Nenhum resultado válido foi obtido para {threads} threads.")
 
