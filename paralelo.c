@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
     int T = atoi(argv[1]);
     int quant_threads = atoi(argv[2]);
     char arquivo[100];
-    sprintf(arquivo, "saida_paralelo/%d.csv", T);
+    sprintf(arquivo, "saida_paralelo%d/%d.csv", quant_threads, T);
     FILE *saida = fopen(arquivo, "w+");
 
     double ***C = (double ***)malloc(2 * sizeof(double **));

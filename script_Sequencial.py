@@ -19,7 +19,7 @@ def salvar_resultados_em_arquivo(valores_T, resultados, tempo_medio, nome_arquiv
 
 inicio_T = 0
 fim_T = 500
-passo_T = 100
+passo_T = 10
 
 valores_T = list(range(inicio_T, fim_T + 1, passo_T))
 
