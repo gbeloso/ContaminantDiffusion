@@ -18,8 +18,8 @@ def salvar_resultados_em_arquivo(valores_T, resultados, tempo_medio, nome_arquiv
 
 
 inicio_T = 0
-fim_T = 800
-passo_T = 400
+fim_T = 500
+passo_T = 100
 
 valores_T = list(range(inicio_T, fim_T + 1, passo_T))
 
@@ -37,30 +37,34 @@ for threads in quant_threads:
     os.makedirs(saida_diretorio, exist_ok=True)
     for T in valores_T:
         print(f"Executando o programa com T={T} e Threads={threads}...")
-        resultado = subprocess.run([f"./{executavel}", str(T), str(quant_threads)], capture_output=True, text=True)
+        resultado = subprocess.run([f"./{executavel}", str(T), str(threads)], capture_output=True, text=True)
 
         if resultado.returncode != 0:
             print(f"Erro ao executar o programa com T={T} e Threads={threads}: {resultado.stderr}")
         else:
             try:
-                tempo_execucao = float(resultado.stdout.strip())
+                # Filtrar a saída para obter apenas a última linha que contém o tempo
+                linhas_saida = resultado.stdout.strip().split("\n")
+                tempo_execucao = float(linhas_saida[-1])  # Última linha contém o tempo
                 resultados.append(tempo_execucao)
                 print(f"Execução concluída para T={T} e Threads={threads}. Tempo: {tempo_execucao} segundos")
             except ValueError:
                 print(f"Erro ao interpretar o tempo para T={T} e Threads={threads}: {resultado.stdout.strip()}")
 
-    
     t_medio = tempo_medio(resultados)
-    print(f"Tempo médio: {t_medio}")
+    print(f"Tempo médio para {threads} threads: {t_medio}")
 
-    plt.plot(valores_T, resultados, marker='o')
-    plt.title(f"Análise de Tempo de Execução para {threads} threads")
-    plt.xlabel("Número de interações")
-    plt.ylabel("Tempo de Execução (segundos)")
-    plt.grid(True)
-    plt.savefig(f"analise_tempo_paralelo{threads}.png")
-    # plt.show()
-    salvar_resultados_em_arquivo(valores_T, resultados, t_medio, f"tempos_execucao_pararelo{threads}.txt")
+    if resultados:  # Garantir que existem resultados para plotar
+        plt.plot(valores_T[:len(resultados)], resultados, marker='o')
+        plt.title(f"Análise de Tempo de Execução para {threads} threads")
+        plt.xlabel("Número de interações")
+        plt.ylabel("Tempo de Execução (segundos)")
+        plt.grid(True)
+        plt.savefig(f"analise_tempo_paralelo{threads}.png")
+        # plt.show()
+        salvar_resultados_em_arquivo(valores_T[:len(resultados)], resultados, t_medio, f"tempos_execucao_pararelo{threads}.txt")
+    else:
+        print(f"Nenhum resultado válido foi obtido para {threads} threads.")
 
     print("\n\n")
 
