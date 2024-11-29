@@ -3,13 +3,13 @@ num_threads = [1, 2, 4, 8, 16]
 media_valores = []
 
 for i in num_threads:
-    if i == i:
-        with open("tempos_execucao_sequencial.txt", "r") as arquivo:
+    if i == 1:
+        with open("./tempos_execucao_sequencial.txt", "r") as arquivo:
             for linha in arquivo:
                 valores_sequencial = linha.strip().split(",")
             media_valores.append(float(valores_sequencial[-1]))
     else:
-        with open(f"tempos_execucao_paralelo{i}.txt", "r") as arquivo:
+        with open(f"./tempos_execucao_paralelo{i}.txt", "r") as arquivo:
             for linha in arquivo:
                 valores_paralelo = linha.strip().split(",")
             media_valores.append(float(valores_paralelo[-1]))

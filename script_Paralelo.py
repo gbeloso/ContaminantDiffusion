@@ -26,11 +26,26 @@ valores_T = list(range(inicio_T, fim_T + 1, passo_T))
 arquivo_c = "paralelo.c"
 executavel = "paralelo.exe"
 
-print("Compilando o programa...")
+print("Compilando o programa paralelo...")
 subprocess.run(["gcc", "-fopenmp", arquivo_c, "-o", executavel], check=True)
 
 quant_threads = [2, 4, 8, 16]
 
+# Para coletar dados para o gráfico combinado
+todas_threads_resultados = {}
+
+# Lendo os dados sequenciais previamente gerados
+sequencial_resultados = []
+sequencial_arquivo = "tempos_execucao_sequencial.txt"
+if os.path.exists(sequencial_arquivo):
+    with open(sequencial_arquivo, "r") as arquivo:
+        linhas = arquivo.readlines()
+        sequencial_resultados = [float(linha.strip()) for linha in linhas[:-2]]  # Ignorar a média
+    print("Dados do sequencial carregados com sucesso.")
+else:
+    print(f"Arquivo {sequencial_arquivo} não encontrado. O gráfico combinado será gerado sem os dados sequenciais.")
+
+# Gerando gráficos para cada configuração de threads
 for threads in quant_threads:
     resultados = []
     saida_diretorio = f"saida_pararelo{threads}"
@@ -55,17 +70,42 @@ for threads in quant_threads:
     print(f"Tempo médio para {threads} threads: {t_medio}")
 
     if resultados:  # Garantir que existem resultados para plotar
-        plt.plot(valores_T[:len(resultados)], resultados, marker='o')
+        todas_threads_resultados[threads] = resultados  # Salvar resultados para o gráfico combinado
+
+        # Criar gráfico individual para cada quantidade de threads
+        plt.figure()
+        plt.plot(valores_T[:len(resultados)], resultados, marker='o', label=f"{threads} threads")
         plt.title(f"Análise de Tempo de Execução para {threads} threads")
         plt.xlabel("Número de interações")
         plt.ylabel("Tempo de Execução (segundos)")
         plt.grid(True)
+        plt.legend()  # Adicionar legenda
         plt.savefig(f"analise_tempo_paralelo{threads}.png")
         # plt.show()
+
         salvar_resultados_em_arquivo(valores_T[:len(resultados)], resultados, t_medio, f"tempos_execucao_pararelo{threads}.txt")
     else:
         print(f"Nenhum resultado válido foi obtido para {threads} threads.")
 
     print("\n\n")
+
+# Criar um gráfico combinado para todas as threads e sequencial
+plt.figure()
+
+# Adicionar os dados sequenciais ao gráfico combinado
+if sequencial_resultados:
+    plt.plot(valores_T[:len(sequencial_resultados)], sequencial_resultados, marker='o', label="Sequencial")
+
+# Adicionar os dados paralelos ao gráfico combinado
+for threads, resultados in todas_threads_resultados.items():
+    plt.plot(valores_T[:len(resultados)], resultados, marker='o', label=f"{threads} threads")
+
+plt.title("Análise de Tempo de Execução Combinada")
+plt.xlabel("Número de interações")
+plt.ylabel("Tempo de Execução (segundos)")
+plt.grid(True)
+plt.legend()  # Adicionar legenda indicando a quantidade de threads
+plt.savefig("analise_tempo_combinada.png")
+# plt.show()
 
 print("Todas as execuções foram concluídas.")
